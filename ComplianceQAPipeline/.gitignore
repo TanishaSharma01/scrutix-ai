@@ -1,0 +1,62 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+*.pyo
+build/
+dist/
+wheels/
+*.egg-info
+*.egg
+
+# Virtual environments
+.venv
+venv/
+env/
+ENV/
+
+# Environment variables & secrets
+.env
+.env.*
+*.env
+!.env.example
+
+# uv
+uv.lock
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# Data files (PDFs, raw data)
+backend/data/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# Type checking
+.mypy_cache/
+.pytype/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Azure / cloud credentials
+*.pem
+*.key
+*.pfx
+*.p12
+azureauth.json

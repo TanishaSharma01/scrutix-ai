@@ -13,7 +13,9 @@ class ComplianceIssue(TypedDict):
 # this defines the state that gets passed around in the agentic workflow
 class VideoAuditState:
     '''
-    defines the data schema for langgraph execution content
+    Defines the data schema for langgraph execution content
+    Main container: holds all th information about the audit
+    right from the initial URL to the final report
     '''
     video_url: str
     video_id: str
@@ -25,6 +27,7 @@ class VideoAuditState:
     ocr_text: List[str] # text that appears at a screen cap
 
     # analysis output
+    # stores the list of all violations found by AI
     compliance_results: Annotated[List[ComplianceIssue], operator.add]
 
     # final deliverables
@@ -33,4 +36,5 @@ class VideoAuditState:
 
     # system observability
     # errors: API timeout, system level errors
+    # list of system level  
     errors: Annotated[List[str], operator.add]

@@ -20,6 +20,7 @@ logger = logging.getLogger("scrutix-ai")
 logging.basicConfig(level=logging.INFO)
 
 # Node 1: Indexer
+# function converts video to text
 def index_video_node(state: VideoAuditState) -> Dict[str, Any]:
     '''
     Downloads the youtube video from the url
@@ -37,7 +38,7 @@ def index_video_node(state: VideoAuditState) -> Dict[str, Any]:
     try:
         vi_service = VideoIndexerService()
 
-        # download
+        # download : yt-dlp
         if "youtube.com" in video_url or "youtu.be" in video_url:
             local_path = vi_service.download_youtube_video(video_url, output_path=local_filename)
         else:
@@ -51,7 +52,7 @@ def index_video_node(state: VideoAuditState) -> Dict[str, Any]:
         if os.path.exists(local_path):
             os.remove(local_path)
         
-        # wait
+        # wait until the results are ready
         raw_insights = vi_service.wait_for_processing(azure_video_id)
 
         # extract
@@ -63,7 +64,7 @@ def index_video_node(state: VideoAuditState) -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"Video Indexing Failed: {str(e)}")
         return{
-            "errors": [str(e)]
+            "errors": [str(e)],
             "final_status": "FAIL",
             "transcript": "",
             "ocr_text": []
@@ -93,13 +94,8 @@ def audio_content_node(state: VideoAuditState) -> Dict[str, Any]:
 
     embeddings = AzureOpenAIEmbeddings(
         azure_deployment = "text-embedding-3-small",
-        open_api_version = os.getenv("AZURE_OPENAI_API_VERSION")
+        open_api_version = os.getenv("AZURE_OPENAI_API_VERSION"),
         temperature=0.0
-    )
-
-    embeddings = AzureOpenAIEmbeddings(
-        azure_deployment = "text-embedding-3-small",
-        open_api_version = os.getenv("AZURE_OPENAI_API_VERSION")
     )
 
     vectorstore = AzureSearch(
@@ -112,10 +108,64 @@ def audio_content_node(state: VideoAuditState) -> Dict[str, Any]:
     # RAG Retrieval
     ocr_text = state.get("ocr_text", [])
     query_text = f"{transcript} {' '.join(ocr_text)}"  
-    docs = vector_store.similarity_search(query_text, k=3)
-    retrieved_rules = "\n\n", join([doc.page_content for doc in docs])
-    
+    docs = vectorstore.similarity_search(query_text, k=3)
+    retrieved_rules = "\n\n".join([doc.page_content for doc in docs])
 
+    system_prompt = f"""
+        You are a senior brand compliance auditor.
+        OFFICIAL_REGULATORY_RULES:
+        {retrieved_rules}
+        INSTRUCTIONS:
+        1. Analyze the provided video transcript and OCR text below.
+        2. Identify ANY violation of rules.
+        3. Return JSON in the following format:
+        {{
+            "compliance_results": [
+                {{
+                    "category": "Claim Validation",
+                    "severity": "CRITICAL",
+                    "description": "Explanation of the violation..."
+                }}
+            ],
+            "status": "FAIL", 
+            "final_report": "Summary of findings..."
+        }}
+
+        If no violations are found, set "status" to "PASS" and "compliance_results" to [].
+     """
+
+    user_message = f""""
+        VIDEO_METADATA: {state.get('video_metadata', {})}
+        TRANSCRIPT: {transcript},
+        ON-SCREEN TEXT: {ocr_text}
+     """
+    
+    try:
+        response = llm.invoke([
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=user_message)
+        ])
+
+        content = response.content
+        if "```" in content:
+            content = re.search(r"```(?:json)?(.*?)```", content, re.DOTALL).group(1)
+        audit_data = json.loads(content.strip())
+
+        return{
+            "compliance_results": audit_data.get("compliance_results", []),
+            "final_status": audit_data.get("status", "FAIL"),
+            "final_report": audit_data.get("final_report", "No report generated.")
+        }
+    
+    except Exception as e:
+        logger.error(f"System error in auditor node: {str(e)}")
+        # logging the raw response
+        logger.error(f"Raw LLM response: {response.content if 'response' in locals() else 'None'}")
+
+        return{
+            "errors": [str(e)],
+            "final_status": "FAIL"
+        }
 
 
 

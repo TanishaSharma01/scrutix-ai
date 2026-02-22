@@ -28,7 +28,7 @@ logging.basicConfig(
     level=logging.INFO,        # INFO = show important events (DEBUG would show everything)
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'  
     # Format: timestamp - logger_name - severity - message
-    # Example: "2024-01-15 10:30:45 - brand-guardian - INFO - Starting audit"
+    # Example: "2024-01-15 10:30:45 - scrutix-ai - INFO - Starting audit"
 )
 logger = logging.getLogger("scrutix-ai-runner")  # Creates a named logger for this module
 
@@ -141,9 +141,9 @@ if __name__ == "__main__":
 
 
 '''
-Ingestion:  (YouTube -> Azure)
+Ingestion:  (YouTube -> Azure) (Downloaded from youtube, uploaded to azure)
 
-Indexing:  (Speech-to-Text + OCR)
+Indexing:  (Speech-to-Text + OCR) 
 
 Retrieval:  (Found the rules about "Claims")
 

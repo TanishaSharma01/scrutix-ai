@@ -89,18 +89,18 @@ def audit_content_node(state: VideoAuditState) -> Dict[str, Any]:
     # intialize clients
     llm = AzureChatOpenAI(
         azure_deployment = os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT"),
+        api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
         temperature=0.0
     )
 
     embeddings = AzureOpenAIEmbeddings(
         azure_deployment = "text-embedding-3-small",
-        open_api_version = os.getenv("AZURE_OPENAI_API_VERSION"),
-        temperature=0.0
+        api_version = os.getenv("AZURE_OPENAI_API_VERSION")
     )
 
     vectorstore = AzureSearch(
         azure_search_endpoint = os.getenv("AZURE_SEARCH_ENDPOINT"),
-        azure_search_key = os.getenv("AZURE_SEARCH_KEY"),
+        azure_search_key=os.getenv("AZURE_SEARCH_API_KEY"),
         index_name = os.getenv("AZURE_SEARCH_INDEX_NAME"), 
         embedding_function = embeddings.embed_query
     )

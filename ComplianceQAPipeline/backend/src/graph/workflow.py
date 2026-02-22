@@ -19,8 +19,8 @@ def create_graph():
     workflow = StateGraph(VideoAuditState)
 
     # add the nodes
-    workflow.add_nodes("indexer", index_video_node)
-    workflow.add_nodes("auditor", audit_content_node)
+    workflow.add_node("indexer", index_video_node)
+    workflow.add_node("auditor", audit_content_node)
 
     # define the entry point : indexer
     workflow.set_entry_point("indexer")

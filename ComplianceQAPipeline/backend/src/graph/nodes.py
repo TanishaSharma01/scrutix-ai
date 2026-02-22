@@ -71,7 +71,7 @@ def index_video_node(state: VideoAuditState) -> Dict[str, Any]:
         }
 
 # Node 2: Compliance Auditor
-def audio_content_node(state: VideoAuditState) -> Dict[str, Any]:
+def audit_content_node(state: VideoAuditState) -> Dict[str, Any]:
     '''
     Performs Retrieval Augmented Generation to audit the content of the video
     '''
